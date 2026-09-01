@@ -5,8 +5,11 @@ import br.edu.ifsp.orderflow.domain.Cliente;
 import br.edu.ifsp.orderflow.domain.ItemPedido;
 import br.edu.ifsp.orderflow.domain.Pedido;
 import br.edu.ifsp.orderflow.domain.Produto;
+import br.edu.ifsp.orderflow.infra.ConsoleNotificacaoService;
+import br.edu.ifsp.orderflow.infra.FakePagamentoGateway;
 import br.edu.ifsp.orderflow.infra.InMemoryEstoqueService;
-import br.edu.ifsp.orderflow.service.IEstoqueService;
+import br.edu.ifsp.orderflow.infra.InMemoryPedidoRepository;
+import br.edu.ifsp.orderflow.service.*;
 
 import java.math.BigDecimal;
 
@@ -15,6 +18,16 @@ public class Main {
     public static void main(String[] args) {
 
         IEstoqueService estoqueService = new InMemoryEstoqueService();
+        IPedidoRepository pedidoRepository = new InMemoryPedidoRepository();
+        INotificacaoService notificacaoService = new ConsoleNotificacaoService();
+        IPagamentoGateway pagamentoGateway = new FakePagamentoGateway();
+
+        PedidoService pedidoService = new PedidoService(
+                estoqueService,
+                pedidoRepository,
+                pagamentoGateway,
+                notificacaoService
+        );
 
         Produto mouse = new Produto(
                 "SKU-1",
@@ -42,20 +55,14 @@ public class Main {
         Cliente may = new Cliente("Mayara","may@gmail.com");
 
         Pedido pedido1 = new Pedido(ana);
-        pedido1.adicionarItem(new ItemPedido(mouse,2));
+        pedido1.adicionarItem(new ItemPedido(mouse,15));
         pedido1.adicionarItem(new ItemPedido(teclado,4));
-
-        boolean reservado = estoqueService.reservar(pedido1);
-
-        if(reservado == false){
-            System.out.println("Não reservado!!");
-        }else{
-            System.out.println("Reservado!!");
-        }
 
         Pedido pedido2 = new Pedido(may);
         pedido2.adicionarItem(new ItemPedido(monitor,2));
         pedido2.adicionarItem(new ItemPedido(teclado,10));
+
+        Pedido pedido = pedidoService.processar(pedido1);
 
         System.out.println(pedido1);
     }
